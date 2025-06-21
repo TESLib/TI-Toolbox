@@ -1,0 +1,135 @@
+{
+  "blocks": {
+    "input_1": {
+      "block_id": "input_1",
+      "block_type": "input",
+      "name": "Subject Input",
+      "parameters": {
+        "subjects": [],
+        "subject_selection": "all"
+      },
+      "position": [50, 50],
+      "status": "pending"
+    },
+    "preprocessing_1": {
+      "block_id": "preprocessing_1",
+      "block_type": "preprocessing",
+      "name": "Pre-processing",
+      "parameters": {
+        "convert_dicom": true,
+        "run_freesurfer": true,
+        "create_m2m": true,
+        "create_atlas": true,
+        "parallel": false,
+        "quiet": false
+      },
+      "position": [250, 50],
+      "status": "pending"
+    },
+    "optimization_1": {
+      "block_id": "optimization_1",
+      "block_type": "optimization",
+      "name": "Flex Search Optimization",
+      "parameters": {
+        "method": "flex_search",
+        "goal": "mean",
+        "postproc": "max_TI",
+        "roi_method": "spherical",
+        "roi_coords": [45, -65, 35],
+        "roi_radius": 10,
+        "max_iterations": 500,
+        "population_size": 13,
+        "electrode_radius": 10,
+        "electrode_current": 2
+      },
+      "position": [450, 50],
+      "status": "pending"
+    },
+    "simulation_1": {
+      "block_id": "simulation_1",
+      "block_type": "simulation",
+      "name": "TI Simulation",
+      "parameters": {
+        "simulation_type": "scalar",
+        "simulation_mode": "unipolar",
+        "current_ch1": 1.0,
+        "current_ch2": 1.0,
+        "electrode_shape": "ellipse",
+        "electrode_dimensions": "8,8",
+        "electrode_thickness": 8
+      },
+      "position": [650, 50],
+      "status": "pending"
+    },
+    "analysis_1": {
+      "block_id": "analysis_1",
+      "block_type": "analysis",
+      "name": "ROI Analysis",
+      "parameters": {
+        "analysis_space": "mesh",
+        "analysis_type": "spherical",
+        "coordinates": [45, -65, 35],
+        "radius": 5,
+        "generate_visualizations": true
+      },
+      "position": [850, 50],
+      "status": "pending"
+    },
+    "output_1": {
+      "block_id": "output_1",
+      "block_type": "output",
+      "name": "Results Output",
+      "parameters": {
+        "output_format": "nifti",
+        "generate_report": true,
+        "archive_results": false
+      },
+      "position": [1050, 50],
+      "status": "pending"
+    }
+  },
+  "connections": [
+    {
+      "source_id": "input_1",
+      "target_id": "preprocessing_1",
+      "source_port": "default",
+      "target_port": "default"
+    },
+    {
+      "source_id": "preprocessing_1",
+      "target_id": "optimization_1",
+      "source_port": "default",
+      "target_port": "default"
+    },
+    {
+      "source_id": "preprocessing_1",
+      "target_id": "simulation_1",
+      "source_port": "default",
+      "target_port": "default"
+    },
+    {
+      "source_id": "optimization_1",
+      "target_id": "simulation_1",
+      "source_port": "default",
+      "target_port": "default"
+    },
+    {
+      "source_id": "simulation_1",
+      "target_id": "analysis_1",
+      "source_port": "default",
+      "target_port": "default"
+    },
+    {
+      "source_id": "analysis_1",
+      "target_id": "output_1",
+      "source_port": "default",
+      "target_port": "default"
+    }
+  ],
+  "metadata": {
+    "name": "Complete TI Pipeline",
+    "description": "A complete end-to-end temporal interference pipeline from DICOM conversion through analysis. This pipeline demonstrates:\n\n1. Subject Input: Automatically processes all available subjects\n2. Pre-processing: Converts DICOM to NIfTI, runs FreeSurfer, creates SimNIBS m2m folder\n3. Optimization: Uses Flex Search to find optimal electrode positions targeting right angular gyrus\n4. Simulation: Runs temporal interference simulation with optimized electrodes\n5. Analysis: Analyzes the electric field in the target ROI\n6. Output: Generates reports and saves results in NIfTI format\n\nTarget Region: Right Angular Gyrus (coordinates: 45, -65, 35)\nThis region is important for spatial attention and numerical cognition.",
+    "created": "2024-01-01",
+    "modified": "2024-01-01"
+  }
+} 

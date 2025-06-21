@@ -1,0 +1,109 @@
+{
+  "blocks": {
+    "input_1": {
+      "block_id": "input_1",
+      "block_type": "input",
+      "name": "Preprocessed Subjects",
+      "parameters": {
+        "subjects": [],
+        "subject_selection": "all"
+      },
+      "position": [50, 100],
+      "status": "pending"
+    },
+    "simulation_1": {
+      "block_id": "simulation_1",
+      "block_type": "simulation",
+      "name": "TI Simulation",
+      "parameters": {
+        "simulation_type": "scalar",
+        "simulation_mode": "unipolar",
+        "current_ch1": 1.0,
+        "current_ch2": 1.0,
+        "electrode_shape": "ellipse",
+        "electrode_dimensions": "8,8",
+        "electrode_thickness": 8
+      },
+      "position": [300, 100],
+      "status": "pending"
+    },
+    "analysis_1": {
+      "block_id": "analysis_1",
+      "block_type": "analysis",
+      "name": "Spherical Analysis",
+      "parameters": {
+        "analysis_space": "mesh",
+        "analysis_type": "spherical",
+        "coordinates": [0, 0, 0],
+        "radius": 5,
+        "generate_visualizations": true
+      },
+      "position": [550, 100],
+      "status": "pending"
+    },
+    "analysis_2": {
+      "block_id": "analysis_2",
+      "block_type": "analysis",
+      "name": "Cortical Analysis",
+      "parameters": {
+        "analysis_space": "mesh",
+        "analysis_type": "cortical",
+        "coordinates": [0, 0, 0],
+        "radius": 5,
+        "generate_visualizations": true
+      },
+      "position": [550, 250],
+      "status": "pending"
+    },
+    "output_1": {
+      "block_id": "output_1",
+      "block_type": "output",
+      "name": "Analysis Results",
+      "parameters": {
+        "output_format": "nifti",
+        "generate_report": true,
+        "archive_results": true
+      },
+      "position": [800, 175],
+      "status": "pending"
+    }
+  },
+  "connections": [
+    {
+      "source_id": "input_1",
+      "target_id": "simulation_1",
+      "source_port": "default",
+      "target_port": "default"
+    },
+    {
+      "source_id": "simulation_1",
+      "target_id": "analysis_1",
+      "source_port": "default",
+      "target_port": "default"
+    },
+    {
+      "source_id": "simulation_1",
+      "target_id": "analysis_2",
+      "source_port": "default",
+      "target_port": "default"
+    },
+    {
+      "source_id": "analysis_1",
+      "target_id": "output_1",
+      "source_port": "default",
+      "target_port": "default"
+    },
+    {
+      "source_id": "analysis_2",
+      "target_id": "output_1",
+      "source_port": "default",
+      "target_port": "default"
+    }
+  ],
+  "metadata": {
+    "name": "Simulation and Analysis Pipeline",
+    "description": "A streamlined pipeline for users who already have preprocessed data (FreeSurfer and SimNIBS m2m folders). This pipeline focuses on:\n\n1. Subject Input: Select subjects that already have m2m folders\n2. Simulation: Run temporal interference simulation with predefined montages\n3. Dual Analysis: Perform both spherical and cortical region analysis\n4. Output: Generate comprehensive reports and archive results\n\nThis pipeline is ideal for:\n- Testing different montages on the same subjects\n- Comparing analysis methods (spherical vs cortical)\n- Quick turnaround studies with preprocessed data\n- Parameter sensitivity analysis",
+    "created": "2024-01-01",
+    "modified": "2024-01-01"
+  }
+} 
