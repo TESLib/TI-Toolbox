@@ -29,6 +29,23 @@ services:
       - ti_network
     restart: unless-stopped
 
+  webapp:
+    image: node:18-alpine
+    platform: linux/amd64
+    container_name: ti_webapp_container
+    volumes:
+      - ${DEV_CODEBASE_DIR}/webapp:/app
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - API_HOST=http://simnibs_container:8080
+    networks:
+      - ti_network
+    command: ["sh", "-c", "npm install && npm start"]
+    restart: unless-stopped
+
   simnibs:
     platform: linux/amd64
     image: idossha/simnibs:2.0.3
@@ -40,6 +57,8 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ${LOCAL_PROJECT_DIR}:/mnt/${PROJECT_DIR_NAME}
       - ${DEV_CODEBASE_DIR}:/development
+    ports:
+      - "8080:8080"
     environment:
       USER: root
       DISPLAY: ${DISPLAY}
@@ -64,6 +83,7 @@ services:
       - fsl
       - freesurfer
       - matlab
+      - webapp
     tty: true
     stdin_open: true
     working_dir: /ti-csc

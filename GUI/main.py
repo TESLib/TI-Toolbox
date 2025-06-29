@@ -26,6 +26,8 @@ from contact_tab import ContactTab
 from acknowledgments_tab import AcknowledgmentsTab
 from nifti_viewer_tab import NiftiViewerTab
 from analyzer_tab import AnalyzerTab
+from web_interface_tab import WebInterfaceTab
+from api_server import APIServer
 
 class MainWindow(QtWidgets.QMainWindow):
     """Main window for the TI-CSC GUI."""
@@ -49,9 +51,15 @@ class MainWindow(QtWidgets.QMainWindow):
             QtWidgets.QSizePolicy.Expanding
         )
         
+        # Initialize API server
+        self.api_server = APIServer(port=8080, main_window=self)
+        
         self.setup_ui()
         # Always center on screen after setup
         self.center_on_screen()
+        
+        # Start API server
+        self.start_api_server()
         
     def setup_ui(self):
         """Set up the user interface."""
@@ -71,6 +79,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.simulator_tab = SimulatorTab(self)
         self.analyzer_tab = AnalyzerTab(self)
         self.nifti_viewer_tab = NiftiViewerTab(self)
+        self.web_interface_tab = WebInterfaceTab(self)
         self.system_monitor_tab = SystemMonitorTab(self)
         self.help_tab = HelpTab(self)
         self.contact_tab = ContactTab(self)
@@ -89,6 +98,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tab_widget.addTab(self.simulator_tab, "Simulator")
         self.tab_widget.addTab(self.analyzer_tab, "Analyzer")
         self.tab_widget.addTab(self.nifti_viewer_tab, "NIfTI Viewer")
+        self.tab_widget.addTab(self.web_interface_tab, "Web Interface")
         self.tab_widget.addTab(self.system_monitor_tab, "System Monitor")
 
         # Step 2: Count how many tabs we have to calculate positions from the right
@@ -129,6 +139,36 @@ class MainWindow(QtWidgets.QMainWindow):
         qr.moveCenter(screen_geometry.center())
         self.move(qr.topLeft())
 
+    def start_api_server(self):
+        """Start the HTTP API server."""
+        try:
+            if self.api_server.start():
+                print("✅ API Server started successfully")
+                # Connect signals from the API bridge
+                bridge = self.api_server.get_bridge()
+                bridge.web_message_received.connect(self.on_web_message)
+                bridge.web_ping_received.connect(self.on_web_ping)
+                bridge.web_analysis_requested.connect(self.on_web_analysis_request)
+            else:
+                print("❌ Failed to start API Server")
+        except Exception as e:
+            print(f"❌ API Server error: {e}")
+
+    def on_web_message(self, message, sender):
+        """Handle message from web interface."""
+        print(f"📨 GUI received web message from {sender}: {message}")
+        # You can add GUI updates here, like showing a notification
+        
+    def on_web_ping(self, data):
+        """Handle ping from web interface."""
+        print(f"🏓 GUI received web ping: {data}")
+        
+    def on_web_analysis_request(self, analysis_type, parameters):
+        """Handle analysis request from web interface."""
+        print(f"🧪 GUI received analysis request: {analysis_type} with {parameters}")
+        # You can trigger actual analysis here
+        # For example, switch to analyzer tab and start analysis
+        
     def closeEvent(self, event):
         """Handle window close event."""
         reply = QtWidgets.QMessageBox.question(
@@ -139,6 +179,10 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         
         if reply == QtWidgets.QMessageBox.Yes:
+            # Stop API server
+            if hasattr(self, 'api_server'):
+                self.api_server.stop()
+            
             # Clean up system monitor thread before closing
             if hasattr(self, 'system_monitor_tab'):
                 self.system_monitor_tab.stop_monitoring()

@@ -29,6 +29,15 @@ logs/
 # Docker
 .dockerignore.bak
 
+# Node.js / Web development
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+package-lock.json.bak
+
 # Distribution packages (created by package_for_distribution.py)
 TI-CSC_*_*/
 

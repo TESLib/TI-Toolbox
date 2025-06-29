@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TI-CSC Web Interface</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧠 TI-CSC Web Interface</h1>
+            <p>Test communication with PyQt GUI</p>
+        </header>
+
+        <div class="status-panel">
+            <div class="status-item">
+                <span class="label">Web App Status:</span>
+                <span id="web-status" class="status ok">Connected</span>
+            </div>
+            <div class="status-item">
+                <span class="label">GUI API Status:</span>
+                <span id="gui-status" class="status unknown">Checking...</span>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>🔧 Basic Tests</h3>
+                <button id="test-web" class="btn btn-primary">Test Web App</button>
+                <button id="test-gui-status" class="btn btn-secondary">Test GUI Status</button>
+                <button id="test-gui-ping" class="btn btn-secondary">Ping GUI</button>
+            </div>
+
+            <div class="card">
+                <h3>📊 GUI Interaction</h3>
+                <button id="get-gui-info" class="btn btn-info">Get GUI Info</button>
+                <button id="send-message" class="btn btn-success">Send Message to GUI</button>
+                <input type="text" id="message-input" placeholder="Enter message...">
+            </div>
+
+            <div class="card">
+                <h3>🧪 TI-CSC Actions</h3>
+                <button id="trigger-analysis" class="btn btn-warning">Trigger Analysis</button>
+                <button id="get-results" class="btn btn-info">Get Results</button>
+                <select id="analysis-type">
+                    <option value="test">Test Analysis</option>
+                    <option value="simulation">TI Simulation</option>
+                    <option value="optimization">Optimization</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="output-section">
+            <h3>📋 Output Log</h3>
+            <div id="output" class="output-log"></div>
+            <button id="clear-log" class="btn btn-small">Clear Log</button>
+        </div>
+
+        <div class="info-section">
+            <h3>ℹ️ Connection Info</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>Web App:</strong> <span id="web-url">Loading...</span>
+                </div>
+                <div class="info-item">
+                    <strong>GUI API:</strong> <span id="gui-url">Loading...</span>
+                </div>
+                <div class="info-item">
+                    <strong>Timestamp:</strong> <span id="timestamp">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html> 
