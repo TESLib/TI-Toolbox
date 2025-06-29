@@ -29,21 +29,21 @@ services:
       - ti_network
     restart: unless-stopped
 
-  webapp:
+  net_viewer:
     image: node:18-alpine
     platform: linux/amd64
-    container_name: ti_webapp_container
+    container_name: ti_net_viewer_container
     volumes:
-      - ${DEV_CODEBASE_DIR}/webapp:/app
+      - ${DEV_CODEBASE_DIR}/net_viewer:/app
     working_dir: /app
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=development
-      - API_HOST=http://simnibs_container:8080
+      - VITE_API_HOST=http://simnibs_container:8080
     networks:
       - ti_network
-    command: ["sh", "-c", "npm install && npm start"]
+    command: ["sh", "-c", "npm install && npm run dev -- --host 0.0.0.0"]
     restart: unless-stopped
 
   simnibs:
@@ -83,7 +83,7 @@ services:
       - fsl
       - freesurfer
       - matlab
-      - webapp
+      - net_viewer
     tty: true
     stdin_open: true
     working_dir: /ti-csc

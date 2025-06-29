@@ -192,6 +192,189 @@ display_welcome() {
   echo " "
 }
 
+# Function to start browser monitor in background
+start_browser_monitor() {
+  echo "🖥️ Starting browser launcher monitor..."
+  
+  local browser_script="$SCRIPT_DIR/browser_launcher.ps1"
+  
+  if [[ ! -f "$browser_script" ]]; then
+    echo "⚠️ Browser launcher script not found: $browser_script"
+    echo "💡 Manual browser launching will be required"
+    return 0
+  fi
+  
+  # Convert WSL paths to Windows paths for PowerShell
+  local win_browser_script=""
+  local win_project_path=""
+  
+  # Convert browser script path from WSL to Windows
+  if [[ "$browser_script" =~ ^/mnt/([a-z])/(.*) ]]; then
+    local drive="${BASH_REMATCH[1]^^}"  # Convert to uppercase
+    local path="${BASH_REMATCH[2]}"
+    win_browser_script="${drive}:\\${path//\//\\}"
+  else
+    win_browser_script="$browser_script"
+  fi
+  
+  # Convert project path from WSL to Windows  
+  if [[ "$LOCAL_PROJECT_DIR" =~ ^/mnt/([a-z])/(.*) ]]; then
+    local drive="${BASH_REMATCH[1]^^}"  # Convert to uppercase
+    local path="${BASH_REMATCH[2]}"
+    win_project_path="${drive}:\\${path//\//\\}"
+  else
+    win_project_path="$LOCAL_PROJECT_DIR"
+  fi
+  
+  echo "🔄 Path conversion:"
+  echo "   Browser script: $browser_script → $win_browser_script"
+  echo "   Project path: $LOCAL_PROJECT_DIR → $win_project_path"
+  
+  # Detect if we're on Windows (WSL, Git Bash, etc.)
+  if [[ -n "$WINDIR" ]] || [[ -n "$WSL_DISTRO_NAME" ]] || [[ "$(uname -r)" == *microsoft* ]] || command -v powershell.exe >/dev/null 2>&1; then
+    echo "🪟 Windows environment detected - starting PowerShell browser monitor"
+    
+    # Try to start PowerShell script in background
+    if command -v powershell.exe >/dev/null 2>&1; then
+      # Create a completely detached PowerShell process that survives bash script exit
+      echo "🚀 Starting detached PowerShell browser monitor (EARLY START)..."
+      echo "🔧 DEBUG: Paths being used:"
+      echo "   WSL Browser script: $browser_script"
+      echo "   Win Browser script: $win_browser_script"
+      echo "   WSL Project path: $LOCAL_PROJECT_DIR"
+      echo "   Win Project path: $win_project_path"
+      
+      # Verify the script file exists
+      if [[ ! -f "$browser_script" ]]; then
+        echo "❌ ERROR: Browser script not found at: $browser_script"
+        return 1
+      fi
+      echo "✅ Browser script file exists"
+      
+      # Build the complete command (remove problematic window title)
+      local cmd_command="start /B powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Minimized -File \"$win_browser_script\" -ProjectPath \"$win_project_path\" -Verbose"
+      echo "🔧 DEBUG: Full cmd.exe command:"
+      echo "   cmd.exe /c \"$cmd_command\""
+      
+      # Try different approaches and capture output
+      echo "📋 Attempting Method 1: cmd.exe with full detachment..."
+      local cmd_output=""
+      local cmd_exit_code=0
+      
+      # Method 1: Full detachment
+      cmd_output=$(cmd.exe /c "$cmd_command" 2>&1) || cmd_exit_code=$?
+      echo "📊 Method 1 results:"
+      echo "   Exit code: $cmd_exit_code"
+      echo "   Output: '$cmd_output'"
+      
+      # Wait and check if process started
+      sleep 3
+      
+      # Check if PowerShell process is running with our script
+      echo "🔍 Checking if PowerShell process started..."
+      local ps_check=""
+      ps_check=$(powershell.exe -Command "Get-Process -Name powershell -ErrorAction SilentlyContinue | Measure-Object | Select-Object -ExpandProperty Count" 2>/dev/null || echo "0")
+      echo "📈 PowerShell processes found: $ps_check"
+      
+      # Simple process check and verification
+      echo "📋 Checking PowerShell processes..."
+      powershell.exe -Command "Get-Process -Name powershell -ErrorAction SilentlyContinue | Select-Object Id, ProcessName" 2>/dev/null || echo "No PowerShell processes found"
+      
+      # Try to verify if our script is actually running
+      echo "🔍 Verifying if browser launcher script is active..."
+      local script_running=$(powershell.exe -Command "Test-Path \"$win_project_path\\.ti-csc-info\"" 2>/dev/null || echo "False")
+      echo "📁 Project .ti-csc-info directory exists: $script_running"
+      
+      # Method 2: If first method failed, try simpler approach
+      if [[ "${ps_check:-0}" == "0" ]]; then
+        echo "📋 Method 1 failed, trying Method 2: Direct PowerShell start..."
+        
+        # Try starting PowerShell directly in background
+        echo "🔧 Starting PowerShell directly..."
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Minimized -File "$win_browser_script" -ProjectPath "$win_project_path" -Verbose &
+        local ps_pid=$!
+        echo "📊 Method 2 results:"
+        echo "   Bash PID: $ps_pid"
+        
+        # Disown the process
+        disown $ps_pid 2>/dev/null || true
+        
+        sleep 2
+        
+        # Check again with simpler command
+        echo "🔍 Checking processes again..."
+        ps_check=$(powershell.exe -Command "Get-Process -Name powershell -ErrorAction SilentlyContinue | Measure-Object | Select-Object -ExpandProperty Count" 2>/dev/null || echo "0")
+        echo "📈 PowerShell processes after Method 2: ${ps_check:-0}"
+      fi
+      
+      # Final status with safer comparison
+      local final_count="${ps_check:-0}"
+      if [[ "$final_count" != "0" && "$final_count" != "" ]]; then
+        echo "✅ Browser monitor appears to be running!"
+        echo "🔍 Check Task Manager for 'powershell.exe' processes"
+      else
+        echo "❌ Browser monitor failed to start"
+        echo "💡 Try running manually in PowerShell:"
+        echo "   powershell.exe -File '$win_browser_script' -ProjectPath '$win_project_path'"
+      fi
+      
+          elif command -v pwsh >/dev/null 2>&1; then
+        # Use pwsh (PowerShell Core) if available  
+        echo "🚀 Starting PowerShell Core browser monitor..."
+        nohup pwsh -NoProfile -ExecutionPolicy Bypass -File "$win_browser_script" -ProjectPath "$win_project_path" -Verbose >/dev/null 2>&1 &
+        disown
+        
+        sleep 2
+        echo "✅ PowerShell Core browser monitor launch attempted"
+        echo "🔍 Monitor should be visible in Task Manager as 'pwsh'"
+        echo "💡 If browser doesn't open automatically, manually run:"
+        echo "   pwsh -File '$win_browser_script' -ProjectPath '$win_project_path'"
+          else
+        echo "⚠️ PowerShell not found - browser auto-launch disabled"
+        echo "💡 You can manually run: powershell.exe -File '$win_browser_script' -ProjectPath '$win_project_path'"
+      fi
+  else
+    echo "🐧 Non-Windows environment - browser monitor not applicable"
+    echo "💡 Use 'Docker Chrome' option in GUI instead"
+  fi
+  
+  echo "🌐 Browser launch system ready!"
+}
+
+# Function to stop browser monitor
+stop_browser_monitor() {
+  echo "🛑 Stopping browser monitor..."
+  
+  # Kill PowerShell processes running the browser launcher
+  if command -v powershell.exe >/dev/null 2>&1; then
+    echo "🔍 Looking for PowerShell browser monitor processes..."
+    # Simplified approach - just stop all powershell processes (safer)
+    local killed=$(powershell.exe -Command "Get-Process -Name powershell -ErrorAction SilentlyContinue | Stop-Process -Force -PassThru | Measure-Object | Select-Object -ExpandProperty Count" 2>/dev/null || echo "0")
+    
+    local kill_count="${killed:-0}"
+    if [[ "$kill_count" != "0" && "$kill_count" != "" ]]; then
+      echo "✅ Stopped $kill_count PowerShell browser monitor process(es)"
+    else
+      echo "ℹ️ No PowerShell browser monitor processes found"
+    fi
+  fi
+  
+  if command -v pwsh >/dev/null 2>&1; then
+    echo "🔍 Looking for PowerShell Core browser monitor processes..."
+    # Simplified approach - just stop all pwsh processes
+    local killed_core=$(pwsh -Command "Get-Process -Name pwsh -ErrorAction SilentlyContinue | Stop-Process -Force -PassThru | Measure-Object | Select-Object -ExpandProperty Count" 2>/dev/null || echo "0")
+    
+    local core_count="${killed_core:-0}"
+    if [[ "$core_count" != "0" && "$core_count" != "" ]]; then
+      echo "✅ Stopped $core_count PowerShell Core browser monitor process(es)"
+    else
+      echo "ℹ️ No PowerShell Core browser monitor processes found"
+    fi
+  fi
+  
+  echo "✅ Browser monitor cleanup completed"
+}
+
 # Function to run Docker Compose and attach to simnibs container
 run_docker_compose() {
   # Pull images if they don't exist
@@ -218,6 +401,9 @@ run_docker_compose() {
 
   # Stop and remove all containers when done
   docker compose -f "$SCRIPT_DIR/docker-compose.dev.yml" down
+
+  # Stop browser monitor if running
+  stop_browser_monitor
 
   # Revert X server access permissions
   xhost -local:root
@@ -398,6 +584,9 @@ export DEV_CODEBASE_NAME="$DEV_CODEBASE_DIR_NAME"  # Add this line to fix the wa
 
 # Save the paths for next time
 save_default_paths
+
+# Start browser launcher monitor EARLY (before Docker starts)
+start_browser_monitor
 
 # Write system info and project status with error handling
 if ! write_system_info; then

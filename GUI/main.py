@@ -98,7 +98,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tab_widget.addTab(self.simulator_tab, "Simulator")
         self.tab_widget.addTab(self.analyzer_tab, "Analyzer")
         self.tab_widget.addTab(self.nifti_viewer_tab, "NIfTI Viewer")
-        self.tab_widget.addTab(self.web_interface_tab, "Web Interface")
+        self.tab_widget.addTab(self.web_interface_tab, "Net Viewer")
         self.tab_widget.addTab(self.system_monitor_tab, "System Monitor")
 
         # Step 2: Count how many tabs we have to calculate positions from the right
